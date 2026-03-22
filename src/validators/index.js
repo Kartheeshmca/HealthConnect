@@ -52,7 +52,8 @@ const healthValidators = {
         }).optional(),
         sugarLevel: Joi.number().optional(),
         sleepHours: Joi.number().optional(),
-        waterIntake: Joi.number().optional()
+        waterIntake: Joi.number().optional(),
+        date: Joi.date().iso().optional()
     })
 };
 
@@ -76,7 +77,7 @@ const reminderValidators = {
 };
 
 export const validate = (schema) => (req, res, next) => {
-    const { error } = schema.validate(req.body, { abortEarly: false });
+    const { error } = schema.validate(req.body, { abortEarly: false, allowUnknown: true });
     if (error) {
         const errorMessages = error.details.map(detail => detail.message).join(', ');
         return res.status(400).json({ success: false, message: errorMessages });

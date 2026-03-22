@@ -38,9 +38,20 @@ export const getHealthHistory = async (req, res, next) => {
         const limit = Math.min(parseInt(req.query.limit, 10) || 20, 50); // cap at 50
         const startIndex = (page - 1) * limit;
 
+        // Authorization check: Self, Admin, or Family Member
         if (userId !== req.user._id.toString() && req.user.role !== 'admin') {
-            res.status(403);
-            throw new Error('Not authorized to view this data');
+            const Family = (await import('../models/Family.js')).default;
+            const isFamilyMember = await Family.findOne({
+                $and: [
+                    { $or: [{ createdBy: req.user._id }, { 'members.user': req.user._id }] },
+                    { $or: [{ createdBy: userId }, { 'members.user': userId }] }
+                ]
+            });
+
+            if (!isFamilyMember) {
+                res.status(403);
+                throw new Error('Not authorized to view this data. You must be in the same family.');
+            }
         }
 
         // Limit to last 30 days for performance
